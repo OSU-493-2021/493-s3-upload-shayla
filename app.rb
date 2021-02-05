@@ -4,7 +4,7 @@ NO_SUCH_BUCKET = "The bucket '%s' does not exist!"
 
 USAGE = <<DOC
 
-Usage: hello-s3 bucket_name [operation] [file_name]
+Usage: hello-s3 bucket_name [operation] [first_name]
 
 Where:
     bucket_name (required) is the name of the bucket
@@ -14,7 +14,7 @@ Where:
     upload  - uploads a file to the bucket
     list    - (default) lists up to 50 bucket items
 
-    file_name   is the name of the file to upload,
+    first_name   is the name of the file to upload,
     required when operation is 'upload'
 
 DOC
@@ -49,11 +49,17 @@ operation = ARGV[1] if (ARGV.length > 1)
 file = nil
 file = ARGV[2] if (ARGV.length > 2)
 
+#set second name for rename function
+second_name = nil
+second_name = ARGV[3] if (ARGV.length > 3)
+
 # Get the bucket by name
 bucket = s3.bucket(bucket_name)
 
+#assess what action to take given various
+#command line arguments
 case operation
-    when 'create'
+    when 'add_bucket'
     # Create a bucket if it doesn't already exist
         if bucket.exists?
             puts "The bucket '%s' already exists!" % bucket_name
@@ -62,9 +68,9 @@ case operation
             puts "Created new S3 bucket: %s" % bucket_name
         end
 
-    when 'upload'
+    when 'add_song'
         if file == nil
-            puts "You must enter the name of the file to upload to S3!"
+            puts "Please enter the song title you wish to upload"
             exit
         end
 
@@ -96,8 +102,50 @@ case operation
             NO_SUCH_BUCKET % bucket_name
         end
 
-    when 'rename'
+    when 'add_artist'
+        if file == nil
+            puts "Please enter the path to the artist directory"
+            exit
+        else
+            artist = File.basename(file, '.*')
+            path = Pathname(artist).each_child {|song|
+                if song.directory?
+                    Dir.each_child(song) do |title|
+                        s3.client.put_object( bucket: bucket_name, key: "#{song}/#{title}")
+                    end
+                end
+            }
+            puts "#{artist} has been added to #{bucket_name}!!!"
+        end
 
+    when 'add_album'
+        if file == nil
+            puts "Please enter the path to the album directory"
+            exit
+        else
+            album = File.basename(file, '.*')
+            Dir.each_child(file) do |song|
+                    s3.client.put_object( bucket: bucket_name, key: "#{album}/#{song}")
+                end
+            puts "#{album} has been added to #{bucket_name}!!!"
+        end
+
+    when 'rename'
+        if file == nil && second_name == nil
+            puts "Please enter the original filename and the new file name"
+            exit
+        else
+            first_name=File.basename file 
+            s3.client.copy_object(
+                bucket: bucket_name,
+                copy_source: "#{bucket_name}/#{first_name}",
+                key: second_name)
+    
+            s3.client.delete_object(
+                bucket: bucket_name,
+                key: first_name)
+            puts "#{first_name} has been renamed #{second_name}."
+        end
 
 else
     puts "Unknown operation: '%s'!" % operation
