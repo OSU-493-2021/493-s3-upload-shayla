@@ -1,5 +1,9 @@
 require 'aws-sdk'
 
+#whoops forgot to reference sources: 
+#https://docs.aws.amazon.com/sdk-for-ruby/v3/developer-guide/hello.html
+#https://docs.aws.amazon.com/AmazonS3/latest/dev/UploadObjSingleOpRuby.html
+
 NO_SUCH_BUCKET = "The bucket '%s' does not exist!"
 
 USAGE = <<DOC
