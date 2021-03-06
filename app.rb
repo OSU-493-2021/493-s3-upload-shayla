@@ -85,8 +85,8 @@ def setup(genre, artist, album, song, key)
 
     item = {
 
-        pk: song,
-        sk: song,
+        pk: "song",
+        sk: "song##{song}",
         info: {
             genre: genre,
             artist: artist,
@@ -98,8 +98,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: artist,
-        sk: song,
+        pk: "artist##{artist}",
+        sk: "song##{song}",
         info: {
             genre: genre,
             artist: artist,
@@ -111,8 +111,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: album,
-        sk: song,
+        pk: "album##{album}",
+        sk: "song##{song}",
         info: {
             genre: genre,
             artist: artist,
@@ -124,8 +124,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: genre,
-        sk: song,
+        pk: "genre##{genre}",
+        sk: "song##{song}",
         info: {
             genre: genre,
             artist: artist,
@@ -137,8 +137,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: artist,
-        sk: artist,
+        pk: "album",
+        sk: "album##{album}",
         info: {
             genre: genre,
             artist: artist,
@@ -150,8 +150,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: album,
-        sk: album,
+        pk: "artist##{artist}",
+        sk: "album##{album}",
         info: {
             genre: genre,
             artist: artist,
@@ -163,8 +163,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: genre,
-        sk: album,
+        pk: "genre##{genre}",
+        sk: "album##{album}",
         info: {
             genre: genre,
             artist: artist,
@@ -176,8 +176,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: artist,
-        sk: album,
+        pk: "artist",
+        sk: "artist##{artist}",
         info: {
             genre: genre,
             artist: artist,
@@ -189,8 +189,8 @@ def setup(genre, artist, album, song, key)
     items.push(item)
 
     item = {
-        pk: artist,
-        sk: artist,
+        pk: "genre##{genre}",
+        sk: "artist##{artist}",
         info: {
             genre: genre,
             artist: artist,
@@ -201,22 +201,22 @@ def setup(genre, artist, album, song, key)
     }
     items.push(item)
 
-    item = {
-        pk: genre,
-        sk: artist,
-        info: {
-            genre: genre,
-            artist: artist,
-            album: album,
-            song: song,
-            key: key
-        }
-    }
-    items.push(item)
+    # item = {
+    #     pk: "genre##{genre}",
+    #     sk: "artist##{artist}",
+    #     info: {
+    #         genre: genre,
+    #         artist: artist,
+    #         album: album,
+    #         song: song,
+    #         key: key
+    #     }
+    # }
+    # items.push(item)
 
     item = {
-        pk: genre,
-        sk: genre,
+        pk: "genre",
+        sk: "genre##{genre}",
         info: {
             genre: genre,
             artist: artist,
@@ -232,9 +232,15 @@ def setup(genre, artist, album, song, key)
         item: item
     }
 
-    puts "Adding song '#{item[:genre]} (#{item[:artist]})' " \
-        "to table '#{table_name}'..."
-    insert(dynamodb_client, table_item)
+    items.each do |item|
+        table_item = {
+            table_name: table_name,
+            item: item
+        }
+    
+            puts "Adding song to table '#{table_name}'..."
+            insert(dynamodb_client, table_item)
+    end
 end
 
 def set_vals(artist: nil, album: nil, song:, key:)
@@ -275,7 +281,7 @@ case operation
         else
             puts "Calling set vals in ADD_SONG"
             puts name
-            set_vals(song: name)
+            set_vals(song: name, key: file)
             obj = s3.bucket(bucket_name).object(name)
             obj.upload_file(file)
             puts "Uploaded '%s' to S3!" % name
