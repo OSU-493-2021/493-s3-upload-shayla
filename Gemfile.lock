@@ -1047,6 +1047,7 @@ GEM
     aws-sigv2 (1.0.1)
     aws-sigv4 (1.2.2)
       aws-eventstream (~> 1, >= 1.0.2)
+    highline (2.0.3)
     jmespath (1.4.0)
 
 PLATFORMS
@@ -1054,6 +1055,7 @@ PLATFORMS
 
 DEPENDENCIES
   aws-sdk (~> 3)
+  highline
 
 BUNDLED WITH
    2.1.4

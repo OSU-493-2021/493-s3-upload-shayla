@@ -1,4 +1,6 @@
 require 'aws-sdk'
+require 'aws-sdk-dynamodb'
+require 'highline/import'
 
 #whoops forgot to reference sources: 
 #https://docs.aws.amazon.com/sdk-for-ruby/v3/developer-guide/hello.html
@@ -8,7 +10,7 @@ NO_SUCH_BUCKET = "The bucket '%s' does not exist!"
 
 USAGE = <<DOC
 
-Usage: hello-s3 bucket_name [operation] [first_name]
+Usage: ruby app.rb [operation] [first_name]
 
 Where:
     bucket_name (required) is the name of the bucket
@@ -60,6 +62,192 @@ second_name = ARGV[3] if (ARGV.length > 3)
 # Get the bucket by name
 bucket = s3.bucket(bucket_name)
 
+def insert(dynamodb_client, table_item)
+    dynamodb_client.put_item(table_item)
+    puts "Added song '#{table_item[:item][:genre]} " \
+        "(#{table_item[:item][:artist]})'."
+    rescue StandardError => e
+    puts "Error adding song '#{table_item[:item][:genre]} " \
+        "(#{table_item[:item][:artist]})': #{e.message}"
+end
+
+def setup(genre, artist, album, song, key)
+    region = 'us-east-1'
+    table_name = 'music'
+
+    Aws.config.update(
+        region: region
+    )
+
+    dynamodb_client = Aws::DynamoDB::Client.new
+
+    items = []
+
+    item = {
+
+        pk: song,
+        sk: song,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: artist,
+        sk: song,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: album,
+        sk: song,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: genre,
+        sk: song,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: artist,
+        sk: artist,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: album,
+        sk: album,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: genre,
+        sk: album,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: artist,
+        sk: album,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: artist,
+        sk: artist,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: genre,
+        sk: artist,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    item = {
+        pk: genre,
+        sk: genre,
+        info: {
+            genre: genre,
+            artist: artist,
+            album: album,
+            song: song,
+            key: key
+        }
+    }
+    items.push(item)
+
+    table_item = {
+        table_name: table_name,
+        item: item
+    }
+
+    puts "Adding song '#{item[:genre]} (#{item[:artist]})' " \
+        "to table '#{table_name}'..."
+    insert(dynamodb_client, table_item)
+end
+
+def set_vals(artist: nil, album: nil, song:, key:)
+    genre = ask "Input genre: "
+    if artist == nil
+        artist = ask "Input artist: "
+    end
+    if album == nil
+        album = ask "Input album: "
+    end
+    setup(genre, artist, album, song, key)
+end
+
 #assess what action to take given various
 #command line arguments
 case operation
@@ -85,6 +273,9 @@ case operation
         if bucket.object(name).exists?
             puts "#{name} already exists in the bucket"
         else
+            puts "Calling set vals in ADD_SONG"
+            puts name
+            set_vals(song: name)
             obj = s3.bucket(bucket_name).object(name)
             obj.upload_file(file)
             puts "Uploaded '%s' to S3!" % name
@@ -130,6 +321,10 @@ case operation
             album = File.basename(file, '.*')
             Dir.each_child(file) do |song|
                     s3.client.put_object( bucket: bucket_name, key: "#{album}/#{song}")
+                    file_path = file + "/" + song
+                    puts "Bout to SET_VALS in ADD_ALBUM"
+                    puts "album: #{file}, song: #{song}, key: #{file_path}"
+                    set_vals(album: file, song: song, key: file_path)
                 end
             puts "#{album} has been added to #{bucket_name}!!!"
         end
@@ -155,4 +350,5 @@ else
     puts "Unknown operation: '%s'!" % operation
     puts USAGE
 end
+
 
